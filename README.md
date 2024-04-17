@@ -1,4 +1,4 @@
-# brewhaha
+# BREW-HAHA
 
 ## Overview
 
@@ -21,4 +21,5 @@ Brew-haha is a flappy bird-inspired game set in the mystical realm of witches an
 - Roxanne Ysabel P. Resuello
 
 Lab Section: B-4L
+
 Lab Instructor: Elijah Nicholas Isungga
