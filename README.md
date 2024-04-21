@@ -23,3 +23,9 @@ Brew-haha is a flappy bird-inspired game set in the mystical realm of witches an
 Lab Section: B-4L
 
 Lab Instructor: Elijah Nicholas Isungga
+
+
+## HOW TO RUN
+1. Install JAVA SE Development Kit (Java 8), JavaFx
+2. Ensure that needed JREs is added to the buiild path
+3. Run 
