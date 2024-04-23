@@ -16,9 +16,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import java.io.File;
 
 public class Game {
 	private Stage stage;
@@ -29,8 +31,8 @@ public class Game {
 	private Group root;
 	private Canvas canvas;
 	
-	public final static int WINDOW_WIDTH = 900;
-	public final static int WINDOW_HEIGHT = 700;
+	public final static int WINDOW_WIDTH = 800;
+	public final static int WINDOW_HEIGHT = 500;
 	
 	public Game(){
 		this.root = new Group();
@@ -42,7 +44,7 @@ public class Game {
 	//Sets the stage
 	public void setStage(Stage stage) {
 		this.stage = stage;
-		stage.setTitle( "Space Shooter" );
+		stage.setTitle( "Brewhaha" );
         
 		this.initSplash(stage);
 		
@@ -54,35 +56,34 @@ public class Game {
 	//Method for initializing the splash scene
 	private void initSplash(Stage stage) {
 		StackPane root = new StackPane();
-        root.getChildren().addAll(this.createCanvas(),this.createVBox());
+        ImageView imageview = new ImageView(new Image("images/mainmenu.jpg", true));
+        imageview.setFitHeight(Game.WINDOW_HEIGHT);
+        imageview.setFitWidth(Game.WINDOW_WIDTH);
+        root.getChildren().addAll(imageview,this.createVBox());
         this.splashScene = new Scene(root);
 	}
-	
-	private Canvas createCanvas() {
-    	Canvas canvas = new Canvas(Game.WINDOW_WIDTH,Game.WINDOW_HEIGHT);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        
-        Image bg = new Image("images/welcome.png");
-        gc.drawImage(bg, 0, 0);
-        return canvas;
-    }
     
     private VBox createVBox() {
     	VBox vbox = new VBox();
         vbox.setAlignment(Pos.CENTER);
-        vbox.setPadding(new Insets(200,00,00,00));
+        vbox.setPadding(new Insets(165,220,00,00));
         vbox.setSpacing(8);
 
-        Button b1 = new Button("Start");
-        Button b2 = new Button("Instruction");
-        Button b3 = new Button("About");
+        Button b1 = new Button();			// start
+        Button b2 = new Button();			// mp
+        Button b3 = new Button();			// about/exit
+        
+
+        b1.setStyle("-fx-background-color: transparent;");
+        b2.setStyle("-fx-background-color: transparent;");
+        b3.setStyle("-fx-background-color: transparent;");
         
         vbox.getChildren().add(b1);
         vbox.getChildren().add(b2);
         vbox.getChildren().add(b3);
-        b1.setPrefSize(110, 25);
-        b2.setPrefSize(110, 25);
-        b3.setPrefSize(110, 25);
+        b1.setPrefSize(120, 35);
+        b2.setPrefSize(150, 35);
+        b3.setPrefSize(120, 35);
         
         b1.setOnAction(new EventHandler<ActionEvent>() {
             @Override 
