@@ -25,7 +25,7 @@ public class Sprite {
 	}
 
 	private Rectangle2D getBounds(){
-		return new Rectangle2D(this.xPos, this.yPos, this.width, this.height);
+		return new Rectangle2D(this.xPos, this.yPos, this.width-10, this.height-10);
 	}
 
 	private void setSize(){
@@ -87,4 +87,5 @@ public class Sprite {
 	public void vanish(){
 		this.visible = false;
 	}
+	
 }

@@ -180,7 +180,11 @@ class GameTimer extends AnimationTimer {
 			Building m = this.buildings.get(i);
 			if(m.isVisible()){
 				m.move();
-				//m.checkCollision(this.spaceship);
+				m.checkCollision(this.witch);
+				if((m.getXPos() < this.witch.getXPos()) && m.getPos() == 0 && m.getPassed() == false){
+					this.witch.gainScore(1);
+					m.setPassed();
+				}
 			
 			}
 			else this.buildings.remove(i);
@@ -196,12 +200,12 @@ class GameTimer extends AnimationTimer {
 		// BOTTOM BUILDING
 		yPos = r.nextInt(Game.WINDOW_HEIGHT-100) + 100;
 		System.out.println(yPos);
-		this.buildings.add(new Building(xPos, yPos, r.nextInt(6)));
+		this.buildings.add(new Building(xPos, yPos, r.nextInt(2), 1));
 		
 		
 		// TOP BUILDING
-		yPos -= 750;
-		this.buildings.add(new Building(xPos, yPos, r.nextInt(6) + 6));
+		yPos -= 600;
+		this.buildings.add(new Building(xPos, yPos, r.nextInt(2) + 2, 0));
 		
 	}
 

@@ -16,7 +16,8 @@ class Spaceship extends Sprite {
 	private int velocityY; //move bird up/down speed.
     private int gravity;
 
-	private final static Image SPACESHIP_IMAGE = new Image("images/spaceship.png");	
+	private final static Image SPACESHIP_IMAGE = new Image("images/witch.png");
+	private final static Image FLY_IMAGE = new Image("images/witch2.png");	
 	private final static double INITIAL_X = 200;
 	public final static int SPACESHIP_SPEED = 2;
 	public final static int ADDED_SPEED = 3;
@@ -47,14 +48,13 @@ class Spaceship extends Sprite {
     //Deducts a damage to the spaceship's strength
     void getDamage(int damage) {
     	this.die();
- 
     }
 	
     //Method for jumping
     public void fly(){
-
-        velocityY = -18; // JUMP HEIGHT
-
+    	this.loadImage(FLY_IMAGE);
+        velocityY = -15; // JUMP HEIGHT
+        
     }
     
     //Adds 1 to the score when a UFO was shot
@@ -74,7 +74,12 @@ class Spaceship extends Sprite {
         velocityY += gravity;
         this.yPos += velocityY;
         this.yPos = Math.max(this.yPos, 0); //apply gravity to current bird.y, limit the bird.y to top of the canvas
-
+        this.loadImage(SPACESHIP_IMAGE);
+        
+        if(this.yPos > 600) {
+        	System.out.println("yPOS: "+this.yPos);
+        	this.die();
+        }
 	}
 	
 }
