@@ -6,214 +6,192 @@
  *************************************************************************************************************************/
 package spacebattle;
 
-import java.io.Serializable;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-
-import java.util.function.Consumer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
 
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Stage;
-import javafx.application.Platform;
 import javafx.event.EventHandler;
-import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import networking.GameClient;
-import networking.GameNetwork;
-import networking.GameServer;
-
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.Stage;
+import networking.Client;
+import networking.Server;
+import networking.GameState;
 
 public class MultiplayerScene {
 
-    public static GameNetwork connection;
-	private boolean playerIsServer;
-    private TextArea chatArea; // chat messages
-	private StackPane pane;
+	private AnchorPane pane;
 	private Scene scene;
 	private GraphicsContext gc;
 	private Canvas canvas;
 	private Stage stage;
 	private Scene splashScene;
-    private String playerName;
-	
-     
-	
-	MultiplayerScene(Stage stage, Scene splashScene){      
-        // Initialize variables        
-        // ask user for their name
-        playerName = JOptionPane.showInputDialog("Enter your name: ");
 
-        // ask user if they want to be the server
-        int serverOption = JOptionPane.showConfirmDialog(null, "Do you want to be the server?", "Server Option", JOptionPane.YES_NO_OPTION);
-        if (serverOption == JOptionPane.YES_OPTION)
-        {
-            playerIsServer = true;
-        }
-        else
-        {
-            playerIsServer = false;
-        }
-        
-        // Initialize JavaFX components
-		this.pane = new StackPane();
+    private boolean playerIsServer;
+    private String playerName;
+    private Server server;
+    private InetAddress serverAddress;
+    private int port;
+
+    private TextArea chatArea;
+    private TextArea chatInput;
+
+    private TextArea playerList;
+
+    private Button sendButton;
+    private Button readyButton;
+
+
+	MultiplayerScene(Stage stage, Scene splashScene){
+
+		this.pane = new AnchorPane();
 		this.scene = new Scene(pane, Game.WINDOW_WIDTH,Game.WINDOW_HEIGHT);
 		this.canvas = new Canvas(Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT);
 		this.gc = canvas.getGraphicsContext2D();
 		this.stage = stage;
 		this.splashScene = splashScene;
+        
+        // initialize multiplayer
+        this.initMultiplayer();
 
-        // Generate components
-        AnchorPane root = new AnchorPane();
-        VBox chatBox = generateChatBox();
-        VBox playerList = generatePlayerList();
-		Button backButton = new Button("Back");
-        backMainMenu(backButton);
-
-        Button startGameButton = new Button("Start Game");
-
-        // Add components to anchor pane
-		root.getChildren().add(chatBox);
-        root.getChildren().add(playerList);
-		root.getChildren().add(backButton);
-        root.getChildren().add(startGameButton);
-
-        // Set component positions in anchor pane
-        AnchorPane.setTopAnchor(chatBox, 10.0);
-        AnchorPane.setLeftAnchor(chatBox, 10.0);
-        AnchorPane.setTopAnchor(playerList, 10.0);
-        AnchorPane.setRightAnchor(playerList, 10.0);
-        AnchorPane.setBottomAnchor(backButton, 10.0);
-        AnchorPane.setLeftAnchor(backButton, 10.0);
-        AnchorPane.setBottomAnchor(startGameButton, 10.0);
-        AnchorPane.setRightAnchor(startGameButton, 10.0);
-
-        // Show scene
-        pane.getChildren().add(root);
-
-
-        // Start connection        
-		if (playerIsServer)
+        // create server or client
+        if (this.playerIsServer)
         {
-            connection = createServer();
-            chatArea.appendText("Connecting to clients...\n");
+            // ask user for port number
+            this.port = Integer.parseInt(JOptionPane.showInputDialog("Enter port number: "));
+            this.server = new Server(this.port);
+            System.out.println("Server started at " + server.getSocket().getLocalAddress() + " on port " + this.port);
+            this.server.setState(GameState.WAITING_FOR_PLAYERS);
         }
         else
         {
-            connection = createClient();
-            chatArea.appendText("Connecting to server...\n");
+            // get port number
+            this.port = Integer.parseInt(JOptionPane.showInputDialog("Enter port number: "));
+
+            Client client = new Client(this.port, this.playerName);
+
+
+            // send connect message to server
+            try {
+                client.connect(InetAddress.getLocalHost(), this.port, this.playerName);
+                System.out.println("Connect message sent");
+            } catch (UnknownHostException e) {
+                System.out.println("Error sending connect message");
+            }
+
+
         }
 
-		try
-        {
-            connection.startConnection();
-        }
-        catch ( Exception e )
-        {
-            System.err.println("Error: Failed to start connection");
-            System.exit(1);
-        }
-        
-	}
+        // create chat area to display chat messages in root
+        this.createChatArea();
 
-     // Initialize Server
-     private GameServer createServer() {
-         return new GameServer(8000, data -> {
-             // Below: Runs whenever data is revieved from the client.
-             //        runLater() gives JavaFX time to draw GUI.
-             Platform.runLater(() -> {
-                     // Display in chat message box
-                     chatArea.appendText(data.toString() + "\n");
-             });
-         });
-     }
+        // create chat input
+        this.createChatInput();
 
-     // Initialize Client
-     private GameClient createClient() {
-         // localhost IP address
-         return new GameClient("127.0.0.1", 8000, data -> {
-             // Below: Runs whenever data is revieved from the server.
-             //        runLater() gives JavaFX time to draw GUI.
-             Platform.runLater(() -> {
-                     // Display in chat message box
-                     chatArea.appendText(data.toString() + "\n");
-             });
-         });
-     }
-     
-    // Generate player list
-    private VBox generatePlayerList()
-    {
-        TextArea playerList = new TextArea();
-        playerList.setEditable(false);
-        playerList.setPrefSize(100, 200);
-        playerList.appendText("Players:\n");
+        // create send button
+        this.createSendButton();
 
-        // Add player to list
-        playerList.appendText(playerName + "\n");
-        
-        VBox playerListBox = new VBox(20, playerList);
-        playerListBox.getStyleClass().add("player-list-box");
+        // create ready button
+        this.createReadyButton();
 
-        return playerListBox;
+        // create player list
+        this.createPlayerList();
+
+        // add event handlers
+        this.addEventHandlers();
+
     }
 
-     // Generate chat window
-    private VBox generateChatBox()
-    {  
-        // sends messages
-        TextField chatField = new TextField();
-        // set size of chat field
-        chatField.setPrefSize(250, 20);
-        chatField.setOnAction(event -> {
-            // Specify if message is from server or client
-            String message = playerName + ": ";
+    private void initMultiplayer(){
+        // ask if user wants to be the server or the client
+        // ask user for their name
+        this.playerName = JOptionPane.showInputDialog("Enter your name: ");
 
-            message += chatField.getText();
-            chatField.clear();
-            chatArea.appendText(message + "\n");
+        // ask user if they want to be the server
+        int serverOption = JOptionPane.showConfirmDialog(null, "Do you want to be the server?", "Server Option", JOptionPane.YES_NO_OPTION);
+        if (serverOption == JOptionPane.YES_OPTION)
+        {
+            this.playerIsServer = true;
+        }
+        else
+        {
+            this.playerIsServer = false;
+        }
+    }
 
-            try {
-                connection.send(message);
-            }
-            catch (Exception e) {
-                chatArea.appendText("Failed to send\n");
+    // create the chat area to display chat messages in AnchorPane
+    private void createChatArea(){
+
+    }
+
+    // create the chat input
+    private void createChatInput(){
+        this.chatInput = new TextArea();
+        this.chatInput.setPrefSize(400, 50);
+        this.chatInput.setTranslateX(100);
+        this.chatInput.setTranslateY(300);
+        this.pane.getChildren().add(this.chatInput);
+    }
+
+    // create the send button
+    private void createSendButton(){
+        this.sendButton = new Button("Send");
+        this.sendButton.setPrefSize(100, 50);
+        this.sendButton.setTranslateX(500);
+        this.sendButton.setTranslateY(300);
+        this.pane.getChildren().add(this.sendButton);
+    }
+
+    // create the ready button
+    private void createReadyButton(){
+        this.readyButton = new Button("Ready");
+        this.readyButton.setPrefSize(100, 50);
+        this.readyButton.setTranslateX(500);
+        this.readyButton.setTranslateY(100);
+        this.pane.getChildren().add(this.readyButton);
+    }
+
+    // create the player list
+    private void createPlayerList(){
+        this.playerList = new TextArea();
+        this.playerList.setEditable(false);
+        this.playerList.setWrapText(true);
+        this.playerList.setPrefSize(100, 200);
+        this.playerList.setTranslateX(100);
+        this.playerList.setTranslateY(100);
+        this.pane.getChildren().add(this.playerList);
+    }
+    
+    // add event handlers
+    private void addEventHandlers(){
+        // send button
+        this.sendButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent arg0) {
+                // send the chat message
+                String message = chatInput.getText();
+                chatArea.appendText(playerName + ": " + message + "\n");
+                chatInput.clear();
             }
         });
 
-        // displays messages
-        chatArea = new TextArea();
-        chatArea.setEditable(false);
-
-        // set size of chat area
-        chatArea.setPrefSize(250, 350);
-
-        VBox chatBox = new VBox(20, chatArea, chatField);
-
-        return chatBox;
+        // ready button
+        this.readyButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent arg0) {
+                // send the ready message
+                chatArea.appendText(playerName + " is ready\n");
+            }
+        });
     }
 
-
- 	
- 	private void backMainMenu(Button btn) {
- 		btn.setOnMouseClicked(new EventHandler<MouseEvent>() {
-
- 			public void handle(MouseEvent arg0) {
- 				stage.setScene(splashScene);		//sets the scene back to the mainmenu scene
- 			}
- 		});
- 	}	
- 	//scenes getter
- 	Scene getScene(){
- 		return this.scene;
- 	}
-
+    // get the scene
+    public Scene getScene(){
+        return this.scene;
+    }
 }
