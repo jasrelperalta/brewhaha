@@ -26,7 +26,7 @@ public class Game {
 	private Stage stage;
 	private Scene splashScene;	// the splash scene
 	private Scene gameScene;		// the game scene
-	private InstructionScene instructionScene;		//instruction scene
+	private MultiplayerScene mutiplayerScene;	// the scene
 	private AboutScene aboutScene;		//about scene
 	private Group root;
 	private Canvas canvas;
@@ -95,7 +95,7 @@ public class Game {
         b2.setOnAction(new EventHandler<ActionEvent>() {
             @Override 
             public void handle(ActionEvent e) {
-                setInstruction(stage);		// changes the scene into the instruction scene
+                setMultiplayer(stage);		// changes the scene into the multiplayer scene
             }
         });
         
@@ -120,10 +120,10 @@ public class Game {
         
 	}	
 	
-	//Method for setting instruction scene
-	private void setInstruction(Stage stage) {
-		this.instructionScene = new InstructionScene(stage, splashScene);
-		stage.setScene(this.instructionScene.getScene());
+	//Method for setting multiplayer scene
+	private void setMultiplayer(Stage stage) {
+		this.mutiplayerScene = new MultiplayerScene(stage, splashScene);
+		stage.setScene(this.mutiplayerScene.getScene());
 	}
 	
 	//Method for setting about scene

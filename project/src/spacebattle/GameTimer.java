@@ -99,8 +99,7 @@ class GameTimer extends AnimationTimer {
         	this.spawnUfo();
         	this.startSpawn = System.nanoTime();
         }
-    }
-    
+    }    
 
    
     
