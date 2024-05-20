@@ -1,7 +1,6 @@
 package networking;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class GameState {
 
@@ -12,7 +11,7 @@ public class GameState {
 	public final static int WAITING_FOR_PLAYERS=3;
     public final static int INITIALIZING_SERVER=4;
 
-    public final static String SERVER_ADDRESS = "0.0.0.0";
+    public final static String SERVER_ADDRESS = "192.168.5.180";
     
     // arraylist to store the players
     private ArrayList<GameUser> players;

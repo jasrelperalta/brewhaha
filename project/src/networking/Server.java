@@ -87,12 +87,14 @@ public class Server implements Runnable {
 
     // send a packet to connected clients
     public void sendToClients(byte[] data){
-        for (GameUser player : players){
+        for (int i = 1; i < players.size(); i++){
+            GameUser player = players.get(i);
+            System.out.println("Sending to " + player.getName() + " at " + player.getAddress() + " on port " + player.getPort());
             DatagramPacket packet = new DatagramPacket(data, data.length, player.getAddress(), player.getPort());
             try {
                 socket.send(packet);
             } catch (IOException e) {
-                // do nothing
+                System.out.println("Error sending packet");
             }
         }
     }

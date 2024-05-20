@@ -18,18 +18,28 @@ public class Client implements Runnable {
 
     // thread for the client
     Thread t = new Thread(this);
+
+    // Callback interface
+    public interface ClientCallback {
+        void onMessageReceived(String message);
+    }
+
+    private ClientCallback callback;
     
     // constructor
-    public Client(int serverPort, String name){
+    public Client(int serverPort, String name, ClientCallback callback){
         try {
             this.socket = new DatagramSocket();
             this.serverAddress = InetAddress.getLocalHost();
             this.serverPort = serverPort;
-
+            this.callback = callback;
             this.player = new GameUser(name, serverAddress, serverPort);
+            //System.out.println("Client created server address: " + serverAddress + " server port: " + serverPort);
         } catch (Exception e) {
             System.out.println("Error creating client socket");
         }
+        t.start();
+        System.out.println("Client thread started");
     }
 
     // method to send a packet
@@ -59,6 +69,7 @@ public class Client implements Runnable {
         byte[] data = ("chat " + name + ": " + message).getBytes();
         sendPacket(data, address, port);
     }
+    
 
     // connect to the server and send a connect message containing the player's name
     public void connect(InetAddress address, int port, String name){
@@ -80,10 +91,17 @@ public class Client implements Runnable {
     // run method for the client
     @Override
     public void run() {
+        //System.out.println("Client running");
         while (true){
             byte[] data = receivePacket();
+            System.out.println(new String(data).trim());
             if (new String(data).trim().startsWith("chat")){
                 System.out.println(new String(data).trim().substring(5));
+                // Notify the callback about the new message
+            if (callback != null) {
+                callback.onMessageReceived(new String(data).trim().substring(5));
+            }
+
             }
             else if (new String(data).trim().startsWith("player")){
                 System.out.println(new String(data).trim().substring(7));
@@ -91,6 +109,8 @@ public class Client implements Runnable {
             else if (new String(data).trim().startsWith("ready")){
                 System.out.println(new String(data).trim());
             }
+
+            
         }
     }
     

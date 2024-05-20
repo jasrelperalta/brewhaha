@@ -8,15 +8,23 @@ package spacebattle;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Optional;
 
 import javax.swing.JOptionPane;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.AnchorPane;
@@ -50,7 +58,6 @@ public class MultiplayerScene {
 
 
 	MultiplayerScene(Stage stage, Scene splashScene){
-
 		this.pane = new AnchorPane();
 		this.scene = new Scene(pane, Game.WINDOW_WIDTH,Game.WINDOW_HEIGHT);
 		this.canvas = new Canvas(Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT);
@@ -64,8 +71,15 @@ public class MultiplayerScene {
         // create server or client
         if (this.playerIsServer)
         {
+            //System.out.println("Server");
             // ask user for port number
-            this.port = Integer.parseInt(JOptionPane.showInputDialog("Enter port number: "));
+            TextInputDialog portDialog = new TextInputDialog();
+            portDialog.setTitle("Enter Port");
+            portDialog.setHeaderText("Enter port number:");
+            Optional<String> portResult = portDialog.showAndWait();
+            if (portResult.isPresent()) {
+                this.port = Integer.parseInt(portResult.get());
+            }
             this.server = new Server(this.port);
             System.out.println("Server started at " + server.getSocket().getLocalAddress() + " on port " + this.port);
             this.server.setState(GameState.WAITING_FOR_PLAYERS);
@@ -73,10 +87,25 @@ public class MultiplayerScene {
         else
         {
             // get port number
-            this.port = Integer.parseInt(JOptionPane.showInputDialog("Enter port number: "));
-
-            Client client = new Client(this.port, this.playerName);
-
+            //this.port = Integer.parseInt(JOptionPane.showInputDialog("Enter port number: "));
+            TextInputDialog portDialog = new TextInputDialog();
+            portDialog.setTitle("Enter Port");
+            portDialog.setHeaderText("Enter port number:");
+            Optional<String> portResult = portDialog.showAndWait();
+            if (portResult.isPresent()) {
+                this.port = Integer.parseInt(portResult.get());
+            }
+            Client client = new Client(this.port, this.playerName, new Client.ClientCallback() {
+            @Override
+            public void onMessageReceived(String message) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        chatArea.appendText(message + "\n");
+                    }
+                });
+    }
+});
 
             // send connect message to server
             try {
@@ -112,22 +141,49 @@ public class MultiplayerScene {
     private void initMultiplayer(){
         // ask if user wants to be the server or the client
         // ask user for their name
-        this.playerName = JOptionPane.showInputDialog("Enter your name: ");
+        //System.out.println("start");
+
+        TextInputDialog nameDialog = new TextInputDialog();
+        nameDialog.setTitle("Enter Name");
+        nameDialog.setHeaderText("Please enter your name:");
+        Optional<String> nameResult = nameDialog.showAndWait();
+        if (nameResult.isPresent()) {
+            this.playerName = nameResult.get();
+        }
+
+        //System.out.println("here");
 
         // ask user if they want to be the server
-        int serverOption = JOptionPane.showConfirmDialog(null, "Do you want to be the server?", "Server Option", JOptionPane.YES_NO_OPTION);
-        if (serverOption == JOptionPane.YES_OPTION)
-        {
+        Alert serverDialog = new Alert(AlertType.CONFIRMATION);
+        serverDialog.setTitle("Server Option");
+        serverDialog.setHeaderText("Do you want to be the server?");
+
+        // Change the button text
+        ButtonType yesButton = new ButtonType("Yes", ButtonData.YES);
+        ButtonType noButton = new ButtonType("No", ButtonData.NO);
+        serverDialog.getButtonTypes().setAll(yesButton, noButton);
+
+        Optional<ButtonType> serverResult = serverDialog.showAndWait();
+        if (serverResult.get() == yesButton){
             this.playerIsServer = true;
-        }
-        else
-        {
+        } else {
             this.playerIsServer = false;
         }
     }
 
     // create the chat area to display chat messages in AnchorPane
     private void createChatArea(){
+        this.chatArea = new TextArea();
+        this.chatArea.setEditable(false);
+        this.chatArea.setWrapText(true);
+        this.chatArea.setPrefSize(300, 200);
+        this.chatArea.setTranslateX(200);
+        this.chatArea.setTranslateY(100);
+        
+        Label chatHeader = new Label("Chat");
+        chatHeader.setTranslateX(200); // Same X position as the TextArea
+        chatHeader.setTranslateY(80);
+        this.pane.getChildren().addAll(chatHeader, this.chatArea);
 
     }
 
@@ -166,7 +222,13 @@ public class MultiplayerScene {
         this.playerList.setPrefSize(100, 200);
         this.playerList.setTranslateX(100);
         this.playerList.setTranslateY(100);
-        this.pane.getChildren().add(this.playerList);
+        //this.pane.getChildren().add(this.playerList);
+
+        Label playersHeader = new Label("Players");
+        playersHeader.setTranslateX(100); // Same X position as the TextArea
+        playersHeader.setTranslateY(80);
+
+        this.pane.getChildren().addAll(playersHeader, this.playerList);
     }
     
     // add event handlers
@@ -174,10 +236,18 @@ public class MultiplayerScene {
         // send button
         this.sendButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent arg0) {
+                
                 // send the chat message
                 String message = chatInput.getText();
                 chatArea.appendText(playerName + ": " + message + "\n");
                 chatInput.clear();
+                String chatMessage = "chat " + playerName + ": " + message;
+                // send the message to the server
+                if (playerIsServer) {
+                    MultiplayerScene.this.server.sendToClients(chatMessage.getBytes());
+                } else {
+                    //client.sendChatMessage(message, serverAddress, MultiplayerScene.this.port, playerName);
+                }
             }
         });
 
